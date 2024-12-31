@@ -10,8 +10,9 @@ import time
 import pandas as pd
 import numpy as np
 
+
 #path to the output evaluation file
-with open(".../transe-kge-summary.txt", "w",) as z:
+with open("lpwc_09202024/transe-sum-2.txt", "w",) as z:
     start_time = time.ctime()
     z.write(f'Calculate embeddings with TransE started at: {start_time}\n')
     z.flush()
@@ -22,7 +23,7 @@ with open(".../transe-kge-summary.txt", "w",) as z:
     third_numbers = []
 
     #input dataset
-    with open('.../triples.txt', 'r') as file:
+    with open('lpwc_09202024/triples_input_embeddings.txt', 'r') as file:
         for line in file:
             numbers = line.split()
             first_numbers.append(int(numbers[0]))
@@ -106,10 +107,24 @@ with open(".../transe-kge-summary.txt", "w",) as z:
         '''
         Uncomment if you want to evaluate the training every 300 epochs based on the validation set (e.g., for early stopping)
         if epoch % 300 == 0:
-            rank, hits = test(val_data, k=10)
+            rank, mrr, hits = test(val_data, k=10)
             z.write(f'Epoch: {epoch:03d}, Val Mean Rank: {rank:.2f}, Val Hits@10: {hits:.4f}\n')
             z.flush()
         '''
+
+    
+
+
+    #Save the trained TransE embeddings for the entites and for the relations in csv files
+    entity_embeddings = model.node_emb.weight.cpu().detach().numpy()
+
+    #path to the output entity embeddings file 
+    np.savetxt('lpwc_09202024/entity_embeddings_transe_2024f2.csv', entity_embeddings, delimiter=',')
+
+    relation_embeddings = model.rel_emb.weight.cpu().detach().numpy()
+
+    #path to the output relation embeddings file 
+    np.savetxt('lpwc_09202024/relation_embeddings_transe_2024f2.csv', relation_embeddings, delimiter=',')
 
 
     k_values = [1, 3, 10]
@@ -118,29 +133,13 @@ with open(".../transe-kge-summary.txt", "w",) as z:
         results[k] = test(test_data, k)
 
     for k in k_values:
-        rank, hits_at_k = results[k]
-        z.write(f'Test Mean Rank: {rank:.2f}, Test Hits@{k}: {hits_at_k:.4f}\n')
+        rank, mrr, hits_at_k = results[k]
+        z.write(f'Test Mean Rank: {rank:.2f}, Test MRR: {mrr:.4f}, Test Hits@{k}: {hits_at_k:.4f}\n')
         z.flush()
 
     end_time = time.ctime()
     z.write(f'Calculate embeddings with TransE end at: {end_time}\n')
     z.flush()
     print('Calculate embeddings with TransE end at: ', end_time)
-
-print('Done training')
-
-
-
-#Save the trained TransE embeddings for the entites and for the relations in csv files
-entity_embeddings = model.node_emb.weight.cpu().detach().numpy()
-
-#path to the output entity embeddings file 
-np.savetxt('.../entity_embeddings_transe.csv', entity_embeddings, delimiter=',')
-
-relation_embeddings = model.rel_emb.weight.cpu().detach().numpy()
-
-#path to the output relation embeddings file 
-np.savetxt('.../relation_embeddings_transe.csv', relation_embeddings, delimiter=',')
-
 
 print('Done')
